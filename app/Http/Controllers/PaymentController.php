@@ -1,61 +1,85 @@
 <?php
+
 namespace App\Http\Controllers;
 
+use App\Models\Otp;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use App\Models\Payment;
-use App\Models\Otp;
-use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
+    // Step 1: Show the Payment Page
     public function showPaymentPage()
     {
         return view('payment');
     }
 
-    public function processPayment(Request $request)
+    // Step 2: Generate OTP and Save Payment
+    public function generateOtp(Request $request)
     {
-        // Save payment details temporarily
-        Payment::create([
-            'email' => $request->email,
-            'amount' => $request->amount,
+        $request->validate([
+            'email' => 'required|email', // Validate email format
+            'amount' => 'required|numeric',
         ]);
 
-        return response()->json(['message' => 'Payment details saved. Sending OTP...']);
-    }
+        // Generate OTP
+        $otp = Str::random(6); // Generate a 6-character OTP
+        $expiresAt = now()->addMinutes(5);
 
-    public function sendOtp(Request $request)
-    {
-        $otp = rand(100000, 999999);
-        $expiresAt = Carbon::now()->addMinutes(5);
-
-        // Save OTP to database
+        // Save OTP to the database
         Otp::create([
             'email' => $request->email,
             'otp' => $otp,
             'expires_at' => $expiresAt,
         ]);
 
+        // Save payment as pending
+        Payment::create([
+            'email' => $request->email,
+            'amount' => $request->amount,
+            'status' => 'Pending',
+        ]);
+
         // Send OTP via email
         Mail::raw("Your OTP is: $otp", function ($message) use ($request) {
-            $message->to($request->email)->subject('Your OTP Code');
+            $message->to($request->email)->subject('Your OTP for Payment');
         });
 
-        return response()->json(['message' => 'OTP sent successfully!']);
+        return redirect()->route('verifyOtpPage')->with('email', $request->email);
     }
 
+    // Step 3: Show OTP Verification Page
+    public function showOtpPage()
+    {
+        return view('verify-otp');
+    }
+
+    // Step 4: Verify OTP and Complete Payment
     public function verifyOtp(Request $request)
     {
-        $otpRecord = Otp::where('otp', $request->otp)
-            ->where('email', $request->email)
-            ->where('expires_at', '>', Carbon::now())
+        $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required',
+        ]);
+
+        // Check OTP validity
+        $otpRecord = Otp::where('email', $request->email)
+            ->where('otp', $request->otp)
+            ->where('expires_at', '>', now())
             ->first();
 
         if ($otpRecord) {
-            return response()->json(['message' => 'OTP verified successfully!']);
-        }
+            // Update payment status to Successful
+            Payment::where('email', $request->email)->update(['status' => 'Successful']);
 
-        return response()->json(['message' => 'Invalid or expired OTP!'], 400);
+            return response()->json(['message' => 'Payment done successfully!']);
+        } else {
+            // Update payment status to Incomplete
+            Payment::where('email', $request->email)->update(['status' => 'Incomplete']);
+
+            return response()->json(['message' => 'Invalid OTP. Payment incomplete.']);
+        }
     }
 }

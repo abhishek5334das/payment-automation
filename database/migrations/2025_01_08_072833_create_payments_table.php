@@ -12,12 +12,13 @@ return new class extends Migration
     public function up(): void
     {
        
-    Schema::create('payments', function (Blueprint $table) {
-        $table->id();
-        $table->string('email');
-        $table->string('amount');
-        $table->timestamps();
-    });
+        Schema::create('payments', function (Blueprint $table) {
+            $table->id();
+            $table->string('email');
+            $table->decimal('amount', 10, 2);
+            $table->string('status')->default('Pending'); // 'Pending', 'Successful', 'Incomplete'
+            $table->timestamps();
+        });
     }
 
     /**
