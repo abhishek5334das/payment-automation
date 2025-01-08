@@ -70,16 +70,19 @@ class PaymentController extends Controller
             ->where('expires_at', '>', now())
             ->first();
 
-        if ($otpRecord) {
-            // Update payment status to Successful
-            Payment::where('email', $request->email)->update(['status' => 'Successful']);
-
-            return response()->json(['message' => 'Payment done successfully!']);
-        } else {
-            // Update payment status to Incomplete
-            Payment::where('email', $request->email)->update(['status' => 'Incomplete']);
-
-            return response()->json(['message' => 'Invalid OTP. Payment incomplete.']);
-        }
+            if ($otpRecord) {
+                // Update payment status to Successful
+                Payment::where('email', $request->email)->update(['status' => 'Successful']);
+            
+                // Flash success message to session
+                return redirect()->route('verifyOtpPage')->with('status', 'Payment done successfully!')->with('status_type', 'success');
+            } else {
+                // Update payment status to Incomplete
+                Payment::where('email', $request->email)->update(['status' => 'Incomplete']);
+            
+                // Flash error message to session
+                return redirect()->route('verifyOtpPage')->with('status', 'Invalid OTP. Payment incomplete.')->with('status_type', 'error');
+            }
+            
     }
 }
