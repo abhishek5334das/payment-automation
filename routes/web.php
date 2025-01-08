@@ -8,8 +8,8 @@ Route::get('/', function () {
 
 use App\Http\Controllers\PaymentController;
 
-Route::get('/', [PaymentController::class, 'index'])->name('home');
+Route::get('/payment', [PaymentController::class, 'showPaymentPage'])->name('payment.page');
 Route::post('/payment', [PaymentController::class, 'processPayment'])->name('payment.process');
-Route::get('/success', [PaymentController::class, 'success'])->name('payment.success');
-Route::get('/failure', [PaymentController::class, 'failure'])->name('payment.failure');
+Route::post('/send-otp', [PaymentController::class, 'sendOtp'])->name('otp.send');
+Route::post('/verify-otp', [PaymentController::class, 'verifyOtp'])->name('otp.verify');
 

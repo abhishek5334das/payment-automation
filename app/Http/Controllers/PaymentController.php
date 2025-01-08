@@ -1,44 +1,61 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Stripe\Stripe;
-use Stripe\PaymentIntent;
+use Illuminate\Support\Facades\Mail;
+use App\Models\Payment;
+use App\Models\Otp;
+use Carbon\Carbon;
 
 class PaymentController extends Controller
 {
-    public function index()
+    public function showPaymentPage()
     {
         return view('payment');
     }
 
     public function processPayment(Request $request)
     {
-        Stripe::setApiKey(env('STRIPE_SECRET'));
+        // Save payment details temporarily
+        Payment::create([
+            'email' => $request->email,
+            'amount' => $request->amount,
+        ]);
 
-        try {
-            $paymentIntent = PaymentIntent::create([
-                'amount' => $request->amount * 100, // Convert to cents
-                'currency' => 'usd',
-                'payment_method_types' => ['card'],
-            ]);
+        return response()->json(['message' => 'Payment details saved. Sending OTP...']);
+    }
 
-            return response()->json([
-                'clientSecret' => $paymentIntent->client_secret,
-            ]);
-        } catch (\Exception $e) {
-            return redirect()->route('payment.failure')->with('error', $e->getMessage());
+    public function sendOtp(Request $request)
+    {
+        $otp = rand(100000, 999999);
+        $expiresAt = Carbon::now()->addMinutes(5);
+
+        // Save OTP to database
+        Otp::create([
+            'email' => $request->email,
+            'otp' => $otp,
+            'expires_at' => $expiresAt,
+        ]);
+
+        // Send OTP via email
+        Mail::raw("Your OTP is: $otp", function ($message) use ($request) {
+            $message->to($request->email)->subject('Your OTP Code');
+        });
+
+        return response()->json(['message' => 'OTP sent successfully!']);
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $otpRecord = Otp::where('otp', $request->otp)
+            ->where('email', $request->email)
+            ->where('expires_at', '>', Carbon::now())
+            ->first();
+
+        if ($otpRecord) {
+            return response()->json(['message' => 'OTP verified successfully!']);
         }
-    }
 
-    public function success()
-    {
-        return view('success');
-    }
-
-    public function failure()
-    {
-        return view('failure');
+        return response()->json(['message' => 'Invalid or expired OTP!'], 400);
     }
 }
