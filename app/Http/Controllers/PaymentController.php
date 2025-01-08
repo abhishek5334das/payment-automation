@@ -56,6 +56,15 @@ class PaymentController extends Controller
         return view('verify-otp');
     }
 
+
+    public function showPaymentsuccess()
+    {
+        return view('success');
+    }
+    public function showPaymentfail()
+    {
+        return view('error');
+    }
     // Step 4: Verify OTP and Complete Payment
     public function verifyOtp(Request $request)
     {
@@ -75,13 +84,13 @@ class PaymentController extends Controller
                 Payment::where('email', $request->email)->update(['status' => 'Successful']);
             
                 // Flash success message to session
-                return redirect()->route('verifyOtpPage')->with('status', 'Payment done successfully!')->with('status_type', 'success');
+                return redirect()->route('paymentsuccessPage')->with('status', 'Payment done successfully!')->with('status_type', 'success');
             } else {
                 // Update payment status to Incomplete
                 Payment::where('email', $request->email)->update(['status' => 'Incomplete']);
             
                 // Flash error message to session
-                return redirect()->route('verifyOtpPage')->with('status', 'Invalid OTP. Payment incomplete.')->with('status_type', 'error');
+                return redirect()->route('paymentfailPage')->with('status', 'Invalid OTP. Payment incomplete.')->with('status_type', 'error');
             }
             
     }

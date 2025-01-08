@@ -13,7 +13,7 @@
 
     <div class="vh-100 container d-flex align-items-center justify-content-center ">
 
-        <form class="bg-info-subtle rounded w-75 d-flex flex-column p-5" action="{{ route('generateOtp') }}" method="POST">
+        <form class="bg-success-subtle rounded w-75 d-flex flex-column p-5" action="{{ route('generateOtp') }}" method="POST">
             @csrf
             <h2 class="text-center mb-4 text-black">JUSTPAY PAYMENT INTEGRATION</h2>
             <label class="form-label text-black" for="email">Email:</label>

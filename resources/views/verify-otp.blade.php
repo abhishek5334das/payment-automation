@@ -24,11 +24,15 @@
         <form class="bg-info-subtle rounded w-75 d-flex flex-column p-5" action="{{ route('verifyOtp') }}" method="POST">
             @csrf
             <h2 class="text-center mb-4 text-black">JUSTPAY OTP VERIFICATION</h2>
-            <label for="email" class="form-label text-black">Email:</label>
-            <input type="email" class="form-control" name="email" value="{{ session('email') }}" readonly>
+            {{-- <label for="email" class="form-label text-black">Email:</label> --}}
+            <input type="hidden" class="form-control" name="email" value="{{ session('email') }}" readonly>
             <label for="otp" class="form-label mt-3 text-black">Enter OTP:</label>
             <input type="text" class="form-control" name="otp" required>
+            <div class="btn-verfy d-flex align-items-center justify-content-center ">
             <button class="btn btn-primary mt-4 w-25 mx-auto" type="submit">Verify OTP</button>
+            
+            <button class="btn btn-primary mt-4 w-25 mx-auto" type="submit">Resend OTP</button>
+        </div>
         </form>
     </div>
 
